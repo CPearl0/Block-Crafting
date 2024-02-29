@@ -1,0 +1,1 @@
+com.cpearl.blockcrafting.compat.kjs.BlockCraftingPlugin
