@@ -178,13 +178,23 @@ public class MultiblockStructure {
             return this;
         }
 
-        public StructureBuilder where(char ch, Predicate<Block> block) {
+        public StructureBuilder whereCond(char ch, Predicate<Block> block) {
             this.dict.put(ch, block);
             return this;
         }
 
-        public StructureBuilder craftingItem(Predicate<Item> item) {
+        public StructureBuilder where(char ch, Block block) {
+            this.dict.put(ch, Predicate.isEqual(block));
+            return this;
+        }
+
+        public StructureBuilder craftingItemCond(Predicate<Item> item) {
             this.craftingItem = item;
+            return this;
+        }
+
+        public StructureBuilder craftingItem(Item item) {
+            this.craftingItem = Predicate.isEqual(item);
             return this;
         }
 
@@ -250,8 +260,13 @@ public class MultiblockStructure {
             return this;
         }
 
-        public StructureFileBuilder craftingItem(Predicate<Item> item) {
+        public StructureFileBuilder craftingItemCond(Predicate<Item> item) {
             this.craftingItem = item;
+            return this;
+        }
+
+        public StructureFileBuilder craftingItem(Item item) {
+            this.craftingItem = Predicate.isEqual(item);
             return this;
         }
 

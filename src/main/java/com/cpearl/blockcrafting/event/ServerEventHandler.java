@@ -2,7 +2,6 @@ package com.cpearl.blockcrafting.event;
 
 import com.cpearl.blockcrafting.BlockCrafting;
 import com.cpearl.blockcrafting.multiblock.MultiblockStructure;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
