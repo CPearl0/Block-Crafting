@@ -2,13 +2,11 @@ package com.cpearl.blockcrafting.multiblock;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -19,7 +17,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.querz.nbt.io.NBTUtil;
 import net.querz.nbt.tag.CompoundTag;
-import net.querz.nbt.tag.Tag;
 import org.antlr.v4.runtime.misc.MultiMap;
 
 import java.io.File;
@@ -53,14 +50,14 @@ public class MultiblockStructure {
     private final List<Tuple<Vec3i, Predicate<Block>>> blocks;
     private final Block centerBlock;
     private final Predicate<Item> craftingItem;
-    private final ItemStack result;
+    private final List<ItemStack> results;
 
-    public MultiblockStructure(Component name, List<Tuple<Vec3i, Predicate<Block>>> blocks, Block centerBlock, Predicate<Item> craftingItem, ItemStack result) {
+    public MultiblockStructure(Component name, List<Tuple<Vec3i, Predicate<Block>>> blocks, Block centerBlock, Predicate<Item> craftingItem, List<ItemStack> results) {
         this.name = name;
         this.blocks = blocks;
         this.centerBlock = centerBlock;
         this.craftingItem = craftingItem;
-        this.result = result;
+        this.results = results;
     }
 
     public Component getName() {
@@ -75,8 +72,8 @@ public class MultiblockStructure {
         return craftingItem;
     }
 
-    public ItemStack getResult() {
-        return result;
+    public List<ItemStack> getResults() {
+        return results;
     }
 
     public void addBlock(Vec3i pos, Predicate<Block> block) {
@@ -149,7 +146,13 @@ public class MultiblockStructure {
                 rpos = rotateClockwise(rpos);
             level.destroyBlock(pos.offset(rpos), false);
         }
-        level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), result.copy()));
+        for (var result : results) {
+            int i = 1;
+            for (; i * result.getMaxStackSize() <= result.getCount(); i++)
+                level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(result.getItem(), result.getMaxStackSize())));
+            if ((i - 1) * result.getMaxStackSize() < result.getCount())
+                level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(result.getItem(), result.getCount() - (i - 1) * result.getMaxStackSize())));
+        }
         return true;
     }
 
@@ -161,7 +164,7 @@ public class MultiblockStructure {
         private final Map<Character, Predicate<Block>> dict = new HashMap<>();
 
         private Predicate<Item> craftingItem;
-        private ItemStack result;
+        private final List<ItemStack> results = new ArrayList<>();
 
         public StructureBuilder(Component name) {
             this.name = name;
@@ -211,8 +214,8 @@ public class MultiblockStructure {
                     ForgeRegistries.ITEMS.tags().getTag(TagKey.create(Registries.ITEM, tag))::contains);
         }
 
-        public StructureBuilder result(ItemStack item) {
-            this.result = item;
+        public StructureBuilder result(ItemStack ...item) {
+            this.results.addAll(List.of(item));
             return this;
         }
 
@@ -243,7 +246,7 @@ public class MultiblockStructure {
                 var pos = vec3iPredicateTuple.getA();
                 vec3iPredicateTuple.setA(pos.offset(-centerX, -centerY, -centerZ));
             });
-            return new MultiblockStructure(name, blocks, centerBlock, craftingItem, result);
+            return new MultiblockStructure(name, blocks, centerBlock, craftingItem, results);
         }
     }
 
@@ -253,7 +256,7 @@ public class MultiblockStructure {
         private Block centerBlock;
 
         private Predicate<Item> craftingItem;
-        private ItemStack result;
+        private final List<ItemStack> results = new ArrayList<>();
 
         public StructureFileBuilder(Component name) {
             this.name = name;
@@ -287,8 +290,8 @@ public class MultiblockStructure {
                     ForgeRegistries.ITEMS.tags().getTag(TagKey.create(Registries.ITEM, tag))::contains);
         }
 
-        public StructureFileBuilder result(ItemStack item) {
-            this.result = item;
+        public StructureFileBuilder result(ItemStack ...item) {
+            this.results.addAll(List.of(item));
             return this;
         }
 
@@ -329,7 +332,7 @@ public class MultiblockStructure {
                 var pos = vec3iPredicateTuple.getA();
                 vec3iPredicateTuple.setA(pos.offset(-centerX, -centerY, -centerZ));
             });
-            return new MultiblockStructure(name, blocks, centerBlock, craftingItem, result);
+            return new MultiblockStructure(name, blocks, centerBlock, craftingItem, results);
         }
     }
 }
