@@ -6,4 +6,3 @@
 Block Crafting give you the ability to make items out of multiblock structures. Build certain structure, then use certain item to right click on the core block, and the structurue will disappear, leaving an item that is crafted out.  
 You can use KubeJS to custom such recipes.  
 Guide: [Wiki](https://github.com/CPearl0/Block-Crafting/wiki)  
-
