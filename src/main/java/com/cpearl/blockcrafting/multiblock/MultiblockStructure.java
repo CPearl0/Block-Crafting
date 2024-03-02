@@ -2,10 +2,14 @@ package com.cpearl.blockcrafting.multiblock;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
 import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
@@ -15,6 +19,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.querz.nbt.io.NBTUtil;
 import net.querz.nbt.tag.CompoundTag;
+import net.querz.nbt.tag.Tag;
 import org.antlr.v4.runtime.misc.MultiMap;
 
 import java.io.File;
@@ -184,8 +189,12 @@ public class MultiblockStructure {
         }
 
         public StructureBuilder where(char ch, Block block) {
-            this.dict.put(ch, Predicate.isEqual(block));
-            return this;
+            return whereCond(ch, Predicate.isEqual(block));
+        }
+
+        public StructureBuilder whereTag(char ch, ResourceLocation tag) {
+            return whereCond(ch,
+                    ForgeRegistries.BLOCKS.tags().getTag(TagKey.create(Registries.BLOCK, tag))::contains);
         }
 
         public StructureBuilder craftingItemCond(Predicate<Item> item) {
@@ -194,8 +203,12 @@ public class MultiblockStructure {
         }
 
         public StructureBuilder craftingItem(Item item) {
-            this.craftingItem = Predicate.isEqual(item);
-            return this;
+            return craftingItemCond(Predicate.isEqual(item));
+        }
+
+        public StructureBuilder craftingItemTag(ResourceLocation tag) {
+            return craftingItemCond(
+                    ForgeRegistries.ITEMS.tags().getTag(TagKey.create(Registries.ITEM, tag))::contains);
         }
 
         public StructureBuilder result(ItemStack item) {
@@ -266,8 +279,12 @@ public class MultiblockStructure {
         }
 
         public StructureFileBuilder craftingItem(Item item) {
-            this.craftingItem = Predicate.isEqual(item);
-            return this;
+            return craftingItemCond(Predicate.isEqual(item));
+        }
+
+        public StructureFileBuilder craftingItemTag(ResourceLocation tag) {
+            return craftingItemCond(
+                    ForgeRegistries.ITEMS.tags().getTag(TagKey.create(Registries.ITEM, tag))::contains);
         }
 
         public StructureFileBuilder result(ItemStack item) {
