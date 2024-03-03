@@ -179,9 +179,9 @@ public class MultiblockStructure {
                 for (var result : itemStacks) {
                     int i = 1;
                     for (; i * result.getMaxStackSize() <= result.getCount(); i++)
-                        level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(result.getItem(), result.getMaxStackSize())));
+                        level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(result.getItem(), result.getMaxStackSize(), result.getTag())));
                     if ((i - 1) * result.getMaxStackSize() < result.getCount())
-                        level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(result.getItem(), result.getCount() - (i - 1) * result.getMaxStackSize())));
+                        level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(result.getItem(), result.getCount() - (i - 1) * result.getMaxStackSize(), result.getTag())));
                 }
             });
         }
