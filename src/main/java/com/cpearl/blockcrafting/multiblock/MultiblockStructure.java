@@ -4,11 +4,11 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Tuple;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 public class MultiblockStructure {
@@ -46,21 +47,21 @@ public class MultiblockStructure {
         list.add(structure);
     }
 
-    private final Component name;
+    private final ResourceLocation name;
     private final List<Tuple<Vec3i, Predicate<Block>>> blocks;
     private final Block centerBlock;
     private final Predicate<Item> craftingItem;
-    private final List<ItemStack> results;
+    private final List<BiConsumer<ServerLevel, BlockPos>> action;
 
-    public MultiblockStructure(Component name, List<Tuple<Vec3i, Predicate<Block>>> blocks, Block centerBlock, Predicate<Item> craftingItem, List<ItemStack> results) {
+    public MultiblockStructure(ResourceLocation name, List<Tuple<Vec3i, Predicate<Block>>> blocks, Block centerBlock, Predicate<Item> craftingItem, List<BiConsumer<ServerLevel, BlockPos>> action) {
         this.name = name;
         this.blocks = blocks;
         this.centerBlock = centerBlock;
         this.craftingItem = craftingItem;
-        this.results = results;
+        this.action = action;
     }
 
-    public Component getName() {
+    public ResourceLocation getName() {
         return name;
     }
 
@@ -72,8 +73,8 @@ public class MultiblockStructure {
         return craftingItem;
     }
 
-    public List<ItemStack> getResults() {
-        return results;
+    public List<BiConsumer<ServerLevel, BlockPos>> getAction() {
+        return action;
     }
 
     public void addBlock(Vec3i pos, Predicate<Block> block) {
@@ -146,31 +147,70 @@ public class MultiblockStructure {
                 rpos = rotateClockwise(rpos);
             level.destroyBlock(pos.offset(rpos), false);
         }
-        for (var result : results) {
-            int i = 1;
-            for (; i * result.getMaxStackSize() <= result.getCount(); i++)
-                level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(result.getItem(), result.getMaxStackSize())));
-            if ((i - 1) * result.getMaxStackSize() < result.getCount())
-                level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(result.getItem(), result.getCount() - (i - 1) * result.getMaxStackSize())));
-        }
+        for (var act : action)
+            act.accept(level, pos);
         return true;
     }
 
-    public static class StructureBuilder {
-        private final Component name;
-        private final List<List<String>> pattern = new ArrayList<>();
-        private char center;
-        private Block centerBlock;
-        private final Map<Character, Predicate<Block>> dict = new HashMap<>();
+    public static class BaseBuilder {
+        protected final ResourceLocation name;
+        protected Block centerBlock;
+        protected Predicate<Item> craftingItem;
+        protected final List<BiConsumer<ServerLevel, BlockPos>> action = new ArrayList<>();
 
-        private Predicate<Item> craftingItem;
-        private final List<ItemStack> results = new ArrayList<>();
-
-        public StructureBuilder(Component name) {
+        protected BaseBuilder(ResourceLocation name) {
             this.name = name;
         }
 
-        public static StructureBuilder create(Component name) {
+        public void addCraftingItemCond(Predicate<Item> item) {
+            this.craftingItem = item;
+        }
+
+        public void addCraftingItem(Item item) {
+            this.craftingItem = Predicate.isEqual(item);
+        }
+
+        public void addCraftingItemTag(ResourceLocation tag) {
+            this.craftingItem = ForgeRegistries.ITEMS.tags().getTag(TagKey.create(Registries.ITEM, tag))::contains;
+        }
+
+        protected void addResultItem(ItemStack ...itemStacks) {
+            action.add((level, pos) -> {
+                for (var result : itemStacks) {
+                    int i = 1;
+                    for (; i * result.getMaxStackSize() <= result.getCount(); i++)
+                        level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(result.getItem(), result.getMaxStackSize())));
+                    if ((i - 1) * result.getMaxStackSize() < result.getCount())
+                        level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(result.getItem(), result.getCount() - (i - 1) * result.getMaxStackSize())));
+                }
+            });
+        }
+
+        protected void addResultEntity(ResourceLocation ...entityKeys) {
+            action.add((level, pos) -> {
+                for (var entityKey : entityKeys) {
+                    var type = ForgeRegistries.ENTITY_TYPES.getValue(entityKey);
+                    if (type != null)
+                        type.spawn(level, pos, MobSpawnType.MOB_SUMMONED);
+                }
+            });
+        }
+
+        protected void addAction(BiConsumer<ServerLevel, BlockPos> ...actions) {
+            action.addAll(List.of(actions));
+        }
+    }
+
+    public static class StructureBuilder extends BaseBuilder {
+        private final List<List<String>> pattern = new ArrayList<>();
+        private char center;
+        private final Map<Character, Predicate<Block>> dict = new HashMap<>();
+
+        public StructureBuilder(ResourceLocation name) {
+            super(name);
+        }
+
+        public static StructureBuilder create(ResourceLocation name) {
             return new StructureBuilder(name);
         }
 
@@ -201,21 +241,32 @@ public class MultiblockStructure {
         }
 
         public StructureBuilder craftingItemCond(Predicate<Item> item) {
-            this.craftingItem = item;
+            addCraftingItemCond(item);
             return this;
         }
 
         public StructureBuilder craftingItem(Item item) {
-            return craftingItemCond(Predicate.isEqual(item));
+            addCraftingItem(item);
+            return this;
         }
 
         public StructureBuilder craftingItemTag(ResourceLocation tag) {
-            return craftingItemCond(
-                    ForgeRegistries.ITEMS.tags().getTag(TagKey.create(Registries.ITEM, tag))::contains);
+            addCraftingItemTag(tag);
+            return this;
         }
 
-        public StructureBuilder result(ItemStack ...item) {
-            this.results.addAll(List.of(item));
+        public StructureBuilder resultItem(ItemStack ...itemStacks) {
+            addResultItem(itemStacks);
+            return this;
+        }
+
+        public StructureBuilder resultEntity(ResourceLocation ...entityKeys) {
+            addResultEntity(entityKeys);
+            return this;
+        }
+
+        public StructureBuilder resultAction(BiConsumer<ServerLevel, BlockPos> ...actions) {
+            addAction(actions);
             return this;
         }
 
@@ -246,23 +297,18 @@ public class MultiblockStructure {
                 var pos = vec3iPredicateTuple.getA();
                 vec3iPredicateTuple.setA(pos.offset(-centerX, -centerY, -centerZ));
             });
-            return new MultiblockStructure(name, blocks, centerBlock, craftingItem, results);
+            return new MultiblockStructure(name, blocks, centerBlock, craftingItem, action);
         }
     }
 
-    public static class StructureFileBuilder {
-        private final Component name;
+    public static class StructureFileBuilder extends BaseBuilder {
         private File file;
-        private Block centerBlock;
 
-        private Predicate<Item> craftingItem;
-        private final List<ItemStack> results = new ArrayList<>();
-
-        public StructureFileBuilder(Component name) {
-            this.name = name;
+        protected StructureFileBuilder(ResourceLocation name) {
+            super(name);
         }
 
-        public static StructureFileBuilder create(Component name) {
+        public static StructureFileBuilder create(ResourceLocation name) {
             return new StructureFileBuilder(name);
         }
 
@@ -277,21 +323,32 @@ public class MultiblockStructure {
         }
 
         public StructureFileBuilder craftingItemCond(Predicate<Item> item) {
-            this.craftingItem = item;
+            addCraftingItemCond(item);
             return this;
         }
 
         public StructureFileBuilder craftingItem(Item item) {
-            return craftingItemCond(Predicate.isEqual(item));
+            addCraftingItem(item);
+            return this;
         }
 
         public StructureFileBuilder craftingItemTag(ResourceLocation tag) {
-            return craftingItemCond(
-                    ForgeRegistries.ITEMS.tags().getTag(TagKey.create(Registries.ITEM, tag))::contains);
+            addCraftingItemTag(tag);
+            return this;
         }
 
-        public StructureFileBuilder result(ItemStack ...item) {
-            this.results.addAll(List.of(item));
+        public StructureFileBuilder resultItem(ItemStack ...itemStacks) {
+            addResultItem(itemStacks);
+            return this;
+        }
+
+        public StructureFileBuilder resultEntity(ResourceLocation ...entityKeys) {
+            addResultEntity(entityKeys);
+            return this;
+        }
+
+        public StructureFileBuilder resultAction(BiConsumer<ServerLevel, BlockPos> ...actions) {
+            addAction(actions);
             return this;
         }
 
@@ -332,7 +389,7 @@ public class MultiblockStructure {
                 var pos = vec3iPredicateTuple.getA();
                 vec3iPredicateTuple.setA(pos.offset(-centerX, -centerY, -centerZ));
             });
-            return new MultiblockStructure(name, blocks, centerBlock, craftingItem, results);
+            return new MultiblockStructure(name, blocks, centerBlock, craftingItem, action);
         }
     }
 }
