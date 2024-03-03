@@ -2,10 +2,10 @@
 
 # 方块合成 Block Crafting
 
-<img src="Title.png" width="200px" alt="Block Crafting Title Image">
+<img src="icon.png" width="40%" alt="Block Crafting Title Image">
 
-<!-- | [![][curseforge-badge]][curseforge-download] | [![][discord-badge]][discord-link] |
-| -------------------------------------------- | ---------------------------------- | -->
+<!-- | [![][curseforge-badge]][curseforge-download] | [![][modrinth-badge]][modrinth-download] | [![][discord-badge]][discord-link] |
+| -------------------------------------------- | ---------------------------------------- | ---------------------------------- | -->
 | [![][discord-badge]][discord-link] |
 | ---------------------------------- |
 </div>
@@ -37,7 +37,9 @@ Guide: [Wiki](https://github.com/CPearl0/Block-Crafting/wiki)
 ---
 
 <!-- [curseforge-badge]: https://img.shields.io/curseforge/dt/{}?style=for-the-badge&logo=curseforge&label=CurseForge%20Downloads&labelColor=0d0d0d&color=ff784d
-[curseforge-download]: https://www.curseforge.com/minecraft/modpacks/{} -->
+[curseforge-download]: https://www.curseforge.com/minecraft/modpacks/{}
+[modrinth-badge]: https://img.shields.io/modrinth/dt/{}?style=for-the-badge&logo=modrinth&labelColor=16181c&color=17b85a
+[modrinth-download]: https://modrinth.com/mod/{} -->
 [discord-badge]: https://img.shields.io/discord/1203359505841389670?style=for-the-badge&logo=discord&label=discord&labelColor=2b2d31&color=23a55a
 [discord-link]: https://discord.gg/EbRDmZmGKz
 
