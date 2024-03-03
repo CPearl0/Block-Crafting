@@ -21,10 +21,7 @@ import org.antlr.v4.runtime.misc.MultiMap;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
@@ -178,10 +175,16 @@ public class MultiblockStructure {
             action.add((level, pos) -> {
                 for (var result : itemStacks) {
                     int i = 1;
-                    for (; i * result.getMaxStackSize() <= result.getCount(); i++)
-                        level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(result.getItem(), result.getMaxStackSize(), result.getTag())));
-                    if ((i - 1) * result.getMaxStackSize() < result.getCount())
-                        level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(result.getItem(), result.getCount() - (i - 1) * result.getMaxStackSize(), result.getTag())));
+                    for (; i * result.getMaxStackSize() <= result.getCount(); i++) {
+                        var stack = new ItemStack(result.getItem(), result.getMaxStackSize());
+                        stack.setTag(result.getTag());
+                        level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), stack));
+                    }
+                    if ((i - 1) * result.getMaxStackSize() < result.getCount()) {
+                        var stack = new ItemStack(result.getItem(), result.getCount() - (i - 1) * result.getMaxStackSize());
+                        stack.setTag(result.getTag());
+                        level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), stack));
+                    }
                 }
             });
         }
