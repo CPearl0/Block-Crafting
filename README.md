@@ -12,7 +12,7 @@
 
 <h2 align="center">方块合成</h2>
 
-方块合成使你能够通过搭建多方块结构来制作物品。搭建特定结构，使用特定物品右键核心方块，结构会消失，并留下一些合成出的物品。  
+方块合成使你能够通过搭建多方块结构来制作物品。搭建特定结构，使用特定物品右键核心方块，结构会消失，并留下一些合成出的物品，召唤一些生物，或进行任何你想要的事情。  
 你可以使用KubeJS来自定义这种配方。
 
 使用教程：[Wiki](https://github.com/CPearl0/Block-Crafting/wiki)
@@ -25,7 +25,7 @@
 
 <h2 align="center">Block Crafting</h2>
 
-Block Crafting give you the ability to make items out of multiblock structures. Build certain structure, then use certain item to right click on the core block, and the structurue will disappear, leaving some items that is crafted out.  
+Block Crafting give you the ability to make items out of multiblock structures. Build certain structure, then use certain item to right click on the core block, and the structurue will disappear, leaving some items that is crafted out, summoning some living entitys, or do anything you want.  
 You can use KubeJS to custom such recipes.
 
 Guide: [Wiki](https://github.com/CPearl0/Block-Crafting/wiki)  
