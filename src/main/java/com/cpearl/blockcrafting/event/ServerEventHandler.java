@@ -12,7 +12,7 @@ public class ServerEventHandler {
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            var level = player.serverLevel();
+            var level = player.getLevel();
             var pos = event.getPos();
             var block = level.getBlockState(pos).getBlock();
             if (!MultiblockStructure.STRUCTURES.containsKey(block))

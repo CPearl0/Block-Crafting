@@ -2,8 +2,8 @@ package com.cpearl.blockcrafting.multiblock;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
 import net.minecraft.core.Vec3i;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
@@ -21,7 +21,10 @@ import org.antlr.v4.runtime.misc.MultiMap;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
@@ -168,7 +171,7 @@ public class MultiblockStructure {
         }
 
         public void addCraftingItemTag(ResourceLocation tag) {
-            this.craftingItem = ForgeRegistries.ITEMS.tags().getTag(TagKey.create(Registries.ITEM, tag))::contains;
+            this.craftingItem = ForgeRegistries.ITEMS.tags().getTag(TagKey.create(Registry.ITEM_REGISTRY, tag))::contains;
         }
 
         protected void addResultItem(ItemStack ...itemStacks) {
@@ -194,7 +197,7 @@ public class MultiblockStructure {
                 for (var entityKey : entityKeys) {
                     var type = ForgeRegistries.ENTITY_TYPES.getValue(entityKey);
                     if (type != null)
-                        type.spawn(level, pos, MobSpawnType.MOB_SUMMONED);
+                        type.spawn(level,null,null, pos, MobSpawnType.MOB_SUMMONED,false,false);
                 }
             });
         }
@@ -240,7 +243,7 @@ public class MultiblockStructure {
 
         public StructureBuilder whereTag(char ch, ResourceLocation tag) {
             return whereCond(ch,
-                    ForgeRegistries.BLOCKS.tags().getTag(TagKey.create(Registries.BLOCK, tag))::contains);
+                    ForgeRegistries.BLOCKS.tags().getTag(TagKey.create(Registry.BLOCK_REGISTRY, tag))::contains);
         }
 
         public StructureBuilder craftingItemCond(Predicate<Item> item) {
