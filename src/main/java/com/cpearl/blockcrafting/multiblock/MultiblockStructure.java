@@ -6,6 +6,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.MobSpawnType;
@@ -18,11 +19,11 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.querz.nbt.io.NBTUtil;
 import net.querz.nbt.tag.CompoundTag;
 import org.antlr.v4.runtime.misc.MultiMap;
+import org.apache.logging.log4j.util.TriConsumer;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 public class MultiblockStructure {
@@ -48,9 +49,9 @@ public class MultiblockStructure {
     private final List<Tuple<Vec3i, Predicate<Block>>> blocks;
     private final Block centerBlock;
     private final Predicate<Item> craftingItem;
-    private final List<BiConsumer<ServerLevel, BlockPos>> action;
+    private final List<TriConsumer<ServerLevel, BlockPos, ServerPlayer>> action;
 
-    public MultiblockStructure(ResourceLocation name, List<Tuple<Vec3i, Predicate<Block>>> blocks, Block centerBlock, Predicate<Item> craftingItem, List<BiConsumer<ServerLevel, BlockPos>> action) {
+    public MultiblockStructure(ResourceLocation name, List<Tuple<Vec3i, Predicate<Block>>> blocks, Block centerBlock, Predicate<Item> craftingItem, List<TriConsumer<ServerLevel, BlockPos, ServerPlayer>> action) {
         this.name = name;
         this.blocks = blocks;
         this.centerBlock = centerBlock;
@@ -70,7 +71,7 @@ public class MultiblockStructure {
         return craftingItem;
     }
 
-    public List<BiConsumer<ServerLevel, BlockPos>> getAction() {
+    public List<TriConsumer<ServerLevel, BlockPos, ServerPlayer>> getAction() {
         return action;
     }
 
@@ -135,7 +136,7 @@ public class MultiblockStructure {
         return res;
     }
 
-    public boolean finish(ServerLevel level, BlockPos pos, int direction) {
+    public boolean finish(ServerLevel level, BlockPos pos, ServerPlayer player, int direction) {
         if (direction < 0)
             return false;
         for (var blockPosPredicate : blocks) {
@@ -145,7 +146,7 @@ public class MultiblockStructure {
             level.destroyBlock(pos.offset(rpos), false);
         }
         for (var act : action)
-            act.accept(level, pos);
+            act.accept(level, pos, player);
         return true;
     }
 
@@ -153,7 +154,7 @@ public class MultiblockStructure {
         protected final ResourceLocation name;
         protected Block centerBlock;
         protected Predicate<Item> craftingItem;
-        protected final List<BiConsumer<ServerLevel, BlockPos>> action = new ArrayList<>();
+        protected final List<TriConsumer<ServerLevel, BlockPos, ServerPlayer>> action = new ArrayList<>();
 
         protected BaseBuilder(ResourceLocation name) {
             this.name = name;
@@ -172,7 +173,7 @@ public class MultiblockStructure {
         }
 
         protected void addResultItem(ItemStack ...itemStacks) {
-            action.add((level, pos) -> {
+            action.add((level, pos, player) -> {
                 for (var result : itemStacks) {
                     int i = 1;
                     for (; i * result.getMaxStackSize() <= result.getCount(); i++) {
@@ -190,7 +191,7 @@ public class MultiblockStructure {
         }
 
         protected void addResultEntity(ResourceLocation ...entityKeys) {
-            action.add((level, pos) -> {
+            action.add((level, pos, player) -> {
                 for (var entityKey : entityKeys) {
                     var type = ForgeRegistries.ENTITY_TYPES.getValue(entityKey);
                     if (type != null)
@@ -199,7 +200,7 @@ public class MultiblockStructure {
             });
         }
 
-        protected void addAction(BiConsumer<ServerLevel, BlockPos> ...actions) {
+        protected void addAction(TriConsumer<ServerLevel, BlockPos, ServerPlayer> ...actions) {
             action.addAll(List.of(actions));
         }
     }
@@ -268,7 +269,7 @@ public class MultiblockStructure {
             return this;
         }
 
-        public StructureBuilder resultAction(BiConsumer<ServerLevel, BlockPos> ...actions) {
+        public StructureBuilder resultAction(TriConsumer<ServerLevel, BlockPos, ServerPlayer> ...actions) {
             addAction(actions);
             return this;
         }
@@ -350,7 +351,7 @@ public class MultiblockStructure {
             return this;
         }
 
-        public StructureFileBuilder resultAction(BiConsumer<ServerLevel, BlockPos> ...actions) {
+        public StructureFileBuilder resultAction(TriConsumer<ServerLevel, BlockPos, ServerPlayer> ...actions) {
             addAction(actions);
             return this;
         }

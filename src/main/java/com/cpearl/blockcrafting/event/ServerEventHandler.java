@@ -20,7 +20,7 @@ public class ServerEventHandler {
             for (var structure : MultiblockStructure.STRUCTURES.get(block)) {
                 if (!structure.getCraftingItem().test(event.getItemStack().getItem()))
                     continue;
-                if (structure.finish(level, pos, structure.finishedDirection(level, pos)))
+                if (structure.finish(level, pos, player, structure.finishedDirection(level, pos)))
                     break;
             }
         }
