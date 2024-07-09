@@ -20,14 +20,24 @@ group = mod_group_id
 
 repositories {
     mavenLocal()
+    maven {
+        name = 'Architectury API'
+        url = "https://maven.architectury.dev"
+        content { includeGroup "dev.architectury" }
+    }
+    maven {
+        name = 'KubeJS and Rhino'
+        url = "https://maven.saps.dev/minecraft"
+        content { includeGroup "dev.latvian.mods" }
+    }
 }
 
 base {
-    archivesName = mod_id
+    archivesName = "${project.name}-${minecraft_version}"
 }
 
 // Mojang ships Java 21 to end users starting in 1.20.5, so mods should target Java 21.
-java.toolchain.languageVersion = JavaLanguageVersion.of(22)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 //minecraft.accessTransformers.file rootProject.file('src/main/resources/META-INF/accesstransformer.cfg')
 //minecraft.accessTransformers.entry public net.minecraft.client.Minecraft textureManager # textureManager
@@ -119,6 +129,11 @@ dependencies {
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
+
+    // KubeJS
+    implementation "dev.latvian.mods:kubejs-neoforge:${kubejs_version}"
+    implementation "dev.latvian.mods:rhino:${rhino_version}"
+    implementation "dev.architectury:architectury-neoforge:${architectury_version}"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

@@ -1,15 +1,16 @@
 package com.cpearl.blockcrafting.compat.kjs;
 
 import com.cpearl.blockcrafting.multiblock.MultiblockStructure;
-import dev.latvian.mods.kubejs.KubeJSPlugin;
-import dev.latvian.mods.kubejs.script.BindingsEvent;
+import dev.latvian.mods.kubejs.plugin.KubeJSPlugin;
+import dev.latvian.mods.kubejs.script.BindingRegistry;
 
-public class BlockCraftingPlugin extends KubeJSPlugin {
+public class BlockCraftingPlugin implements KubeJSPlugin {
     @Override
-    public void registerBindings(BindingsEvent event) {
-        event.add("BlockCrafting", new BlockCraftingKubeJSBindings());
-        event.add("MultiblockStructure", MultiblockStructure.class);
-        event.add("MultiblockStructureBuilder", MultiblockStructure.StructureBuilder.class);
-        event.add("MultiblockStructureFileBuilder", MultiblockStructure.StructureFileBuilder.class);
+    public void registerBindings(BindingRegistry bindings) {
+        KubeJSPlugin.super.registerBindings(bindings);
+        bindings.add("BlockCrafting", new BlockCraftingKubeJSBindings());
+        bindings.add("MultiblockStructure", MultiblockStructure.class);
+        bindings.add("MultiblockStructureBuilder", MultiblockStructure.StructureBuilder.class);
+        bindings.add("MultiblockStructureFileBuilder", MultiblockStructure.StructureFileBuilder.class);
     }
 }

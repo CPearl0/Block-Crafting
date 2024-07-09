@@ -3,6 +3,7 @@ package com.cpearl.blockcrafting.multiblock;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -15,7 +16,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.querz.nbt.io.NBTUtil;
 import net.querz.nbt.tag.CompoundTag;
 import org.antlr.v4.runtime.misc.MultiMap;
@@ -169,7 +169,15 @@ public class MultiblockStructure {
         }
 
         public void addCraftingItemTag(ResourceLocation tag) {
-            this.craftingItem = ForgeRegistries.ITEMS.tags().getTag(TagKey.create(Registries.ITEM, tag))::contains;
+            this.craftingItem = item -> {
+                for (var tagItem : BuiltInRegistries.ITEM.getTagOrEmpty(TagKey.create(Registries.ITEM, tag))) {
+                    if (tagItem.unwrap().left().isPresent()) {
+                        if (BuiltInRegistries.ITEM.get(tagItem.unwrap().left().get().location()) == item)
+                            return true;
+                    }
+                }
+                return false;
+            };
         }
 
         protected void addResultItem(ItemStack ...itemStacks) {
@@ -178,12 +186,12 @@ public class MultiblockStructure {
                     int i = 1;
                     for (; i * result.getMaxStackSize() <= result.getCount(); i++) {
                         var stack = new ItemStack(result.getItem(), result.getMaxStackSize());
-                        stack.setTag(result.getTag());
+                        stack.applyComponents(result.getComponents());
                         level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), stack));
                     }
                     if ((i - 1) * result.getMaxStackSize() < result.getCount()) {
                         var stack = new ItemStack(result.getItem(), result.getCount() - (i - 1) * result.getMaxStackSize());
-                        stack.setTag(result.getTag());
+                        stack.applyComponents(result.getComponents());
                         level.addFreshEntity(new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), stack));
                     }
                 }
@@ -193,9 +201,8 @@ public class MultiblockStructure {
         protected void addResultEntity(ResourceLocation ...entityKeys) {
             action.add((level, pos, player) -> {
                 for (var entityKey : entityKeys) {
-                    var type = ForgeRegistries.ENTITY_TYPES.getValue(entityKey);
-                    if (type != null)
-                        type.spawn(level, pos, MobSpawnType.MOB_SUMMONED);
+                    var type = BuiltInRegistries.ENTITY_TYPE.get(entityKey);
+                    type.spawn(level, pos, MobSpawnType.MOB_SUMMONED);
                 }
             });
         }
@@ -240,8 +247,15 @@ public class MultiblockStructure {
         }
 
         public StructureBuilder whereTag(char ch, ResourceLocation tag) {
-            return whereCond(ch,
-                    ForgeRegistries.BLOCKS.tags().getTag(TagKey.create(Registries.BLOCK, tag))::contains);
+            return whereCond(ch, block -> {
+                for (var tagBlock : BuiltInRegistries.BLOCK.getTagOrEmpty(TagKey.create(Registries.BLOCK, tag))) {
+                    if (tagBlock.unwrap().left().isPresent()) {
+                        if (BuiltInRegistries.BLOCK.get(tagBlock.unwrap().left().get().location()) == block)
+                            return true;
+                    }
+                }
+                return false;
+            });
         }
 
         public StructureBuilder craftingItemCond(Predicate<Item> item) {
@@ -367,7 +381,7 @@ public class MultiblockStructure {
             var palette = tag.getListTag("palette").asCompoundTagList();
             Block[] blockList = new Block[palette.size()];
             for (int i = 0; i < palette.size(); i++) {
-                blockList[i] = ForgeRegistries.BLOCKS.getValue(
+                blockList[i] = BuiltInRegistries.BLOCK.get(
                         ResourceLocation.tryParse(palette.get(i).getString("Name")));
             }
             for (int i = 0; i < blockPosList.size(); i++) {
