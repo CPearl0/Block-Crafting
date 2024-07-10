@@ -283,7 +283,8 @@ public class MultiblockStructure {
             return this;
         }
 
-        public StructureBuilder resultAction(TriConsumer<ServerLevel, BlockPos, ServerPlayer> ...actions) {
+        @SafeVarargs
+        public final StructureBuilder resultAction(TriConsumer<ServerLevel, BlockPos, ServerPlayer>... actions) {
             addAction(actions);
             return this;
         }

@@ -5,13 +5,13 @@ import com.cpearl.blockcrafting.multiblock.MultiblockStructure;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent;
 
 @EventBusSubscriber(modid = BlockCrafting.MODID)
 public class ServerEventHandler {
     @SubscribeEvent
-    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
+    public static void onUseItemOnBlock(UseItemOnBlockEvent event) {
+        if (event.getPlayer() instanceof ServerPlayer player) {
             var level = player.serverLevel();
             var pos = event.getPos();
             var block = level.getBlockState(pos).getBlock();
