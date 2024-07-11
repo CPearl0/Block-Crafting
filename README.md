@@ -19,7 +19,7 @@
 
 ### 相关链接：
 
-> QQ群：`677453983`
+> QQ群：`945385463`
 
 ---
 
@@ -32,7 +32,7 @@ Guide: [Wiki](https://github.com/CPearl0/Block-Crafting/wiki)
 
 ### Links:
 
-> QQ Group: `677453983`
+> QQ Group: `945385463`
 
 ---
 
